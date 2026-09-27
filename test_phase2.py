@@ -379,8 +379,19 @@ class TestCustomPlatforms(unittest.TestCase):
     """Test custom platforms save, persistence, duplicates, and file generation (Parts 13-19)."""
     def setUp(self):
         self.d = Path(tempfile.mkdtemp())
+        self.orig_get_root = backend.get_project_root
+        self.orig_get_config = backend.get_config_path
+        self.config_file = self.d / "project.json"
+        backend.get_project_root = lambda: self.d
+        backend.get_config_path = lambda: self.config_file
+        backend._write_and_verify_json(
+            self.config_file,
+            {"repository": str(self.d), "default_language": "cpp", "platforms": {"custom": []}},
+        )
 
     def tearDown(self):
+        backend.get_project_root = self.orig_get_root
+        backend.get_config_path = self.orig_get_config
         _rm(self.d)
 
     def test_builtin_platforms_exist(self):
