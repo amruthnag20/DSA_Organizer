@@ -1,0 +1,18 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Pytest cache
+.pytest_cache/
+
+# Environment / IDE
+.env
+.venv/
+env/
+venv/
+.idea/
+.vscode/
+
+# Temporary files
+*.tmp

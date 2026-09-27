@@ -1,0 +1,22 @@
+{
+    "repository": "C:\\Users\\jonna\\OneDrive\\Documents\\DSA",
+    "repository_path": "C:\\Users\\jonna\\OneDrive\\Documents\\DSA",
+    "default_language": "cpp",
+    "platforms": {
+        "custom": [
+            "smart interview"
+        ]
+    },
+    "categories": {
+        "custom": [
+            "Math"
+        ]
+    },
+    "tags": {
+        "custom": []
+    },
+    "git": {
+        "remote_name": "origin",
+        "remote_url": "https://github.com/amruthnag20/DSA"
+    }
+}
