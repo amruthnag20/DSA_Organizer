@@ -16,3 +16,11 @@ venv/
 
 # Temporary files
 *.tmp
+
+# Node / Frontend
+frontend/node_modules/
+frontend/dist/
+
+# Tauri / Rust
+frontend/src-tauri/target/
+frontend/src-tauri/gen/
