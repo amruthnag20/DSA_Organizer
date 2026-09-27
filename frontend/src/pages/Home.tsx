@@ -79,8 +79,7 @@ export const Home: React.FC<HomeProps> = ({ repoPath }) => {
   const handleAddProblem = () => {
     setActionNotice({
       type: "info",
-      message:
-        "The Add Problem dialog will be migrated in a subsequent phase. In the meantime, save source files into your repository folders or use the legacy desktop interface.",
+      message: "Add Problem is temporarily unavailable in this build.",
     });
   };
 

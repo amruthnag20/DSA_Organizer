@@ -35,9 +35,9 @@ export const App: React.FC = () => {
     if (tab === "home") {
       setActiveTab("home");
     } else if (tab === "search") {
-      setNotice("Search migration is scheduled for Phase 3. Use the legacy interface in the meantime.");
+      setNotice("Search is temporarily unavailable in this build.");
     } else if (tab === "repo") {
-      setNotice("Repository & Git migration is scheduled for Phase 4. Use the legacy interface in the meantime.");
+      setNotice("Repository & Git is temporarily unavailable in this build.");
     }
   };
 
@@ -64,22 +64,18 @@ export const App: React.FC = () => {
             className={`nav-item ${activeTab === "search" ? "active" : ""}`}
             onClick={() => handleNavClick("search")}
             id="nav-search"
-            title="Scheduled for Phase 3"
           >
             <span className="nav-icon">🔎</span>
             <span className="nav-text">Search</span>
-            <span className="nav-badge">Phase 3</span>
           </button>
 
           <button
             className={`nav-item ${activeTab === "repo" ? "active" : ""}`}
             onClick={() => handleNavClick("repo")}
             id="nav-repo"
-            title="Scheduled for Phase 4"
           >
             <span className="nav-icon">⚙</span>
             <span className="nav-text">Repository & Git</span>
-            <span className="nav-badge">Phase 4</span>
           </button>
         </nav>
 
