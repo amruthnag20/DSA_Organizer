@@ -307,6 +307,220 @@ class TestBridgeDomainCommands:
             data = resp["data"]
             assert "git_available" in data
 
+    def test_get_metadata_options(self):
+        """get_metadata_options returns complete sets of choices for Add Problem."""
+        with BridgeProcess() as bridge:
+            resp = bridge.send("get_metadata_options")
+            assert resp["ok"] is True
+            data = resp["data"]
+            assert "languages" in data
+            assert "platforms" in data
+            assert "categories" in data
+            assert "tags" in data
+            assert "concepts" in data
+            assert "data_structures" in data
+            assert "C++" in data["languages"]
+            assert "LeetCode" in data["platforms"]
+            assert "Arrays" in data["categories"]
+            assert "Interview" in data["tags"]
+
+    def test_analyze_complexity(self):
+        """analyze_complexity determines time and space complexity."""
+        with BridgeProcess() as bridge:
+            code = "int main() { for(int i=0; i<10; i++) {} return 0; }"
+            resp = bridge.send("analyze_complexity", {"language": "C++", "solution_code": code})
+            assert resp["ok"] is True
+            data = resp["data"]
+            assert "time_complexity" in data
+            assert "space_complexity" in data
+
+    def test_add_problem_cpp(self, tmp_path):
+        """add_problem creates C++ source file with header in category directory."""
+        repo = tmp_path / "RepoCPP"
+        repo.mkdir()
+
+        with BridgeProcess() as bridge:
+            resp = bridge.send(
+                "add_problem",
+                {
+                    "title": "Reverse Linked List",
+                    "platform": "LeetCode",
+                    "language": "C++",
+                    "category": "LinkedLists",
+                    "description": "Reverse a singly linked list.",
+                    "solution_code": "ListNode* reverseList(ListNode* head) { return head; }",
+                    "concepts": "Two Pointer",
+                    "data_structures": "Linked List",
+                    "tags": "Interview, Important",
+                    "importance": 4,
+                    "repo_path": str(repo),
+                },
+            )
+            assert resp["ok"] is True
+            data = resp["data"]
+            assert data["success"] is True
+            assert data["file_path"] is not None
+            fpath = Path(data["file_path"])
+            assert fpath.exists()
+            assert fpath.name == "ReverseLinkedList.cpp"
+            assert fpath.parent.name == "LinkedLists"
+            content = fpath.read_text(encoding="utf-8")
+            assert "Problem: Reverse Linked List" in content
+            assert "Platform: LeetCode" in content
+            assert "Primary Category: LinkedLists" in content
+            assert "Time Complexity:" in content
+            assert "Space Complexity:" in content
+
+    def test_add_problem_java(self, tmp_path):
+        """add_problem creates Java source file with .java extension."""
+        repo = tmp_path / "RepoJava"
+        repo.mkdir()
+
+        with BridgeProcess() as bridge:
+            resp = bridge.send(
+                "add_problem",
+                {
+                    "title": "Valid Anagram",
+                    "platform": "LeetCode",
+                    "language": "Java",
+                    "category": "Hashing",
+                    "description": "Given two strings s and t...",
+                    "solution_code": "class Solution { public boolean isAnagram(String s, String t) { return true; } }",
+                    "repo_path": str(repo),
+                },
+            )
+            assert resp["ok"] is True
+            data = resp["data"]
+            assert data["success"] is True
+            fpath = Path(data["file_path"])
+            assert fpath.exists()
+            assert fpath.name == "ValidAnagram.java"
+            assert fpath.parent.name == "Hashing"
+
+    def test_add_problem_python(self, tmp_path):
+        """add_problem creates Python source file with .py extension and triple-quote header."""
+        repo = tmp_path / "RepoPy"
+        repo.mkdir()
+
+        with BridgeProcess() as bridge:
+            resp = bridge.send(
+                "add_problem",
+                {
+                    "title": "Contains Duplicate",
+                    "platform": "LeetCode",
+                    "language": "Python",
+                    "category": "Arrays",
+                    "description": "Check if array contains duplicates.",
+                    "solution_code": "def containsDuplicate(nums): return len(nums) != len(set(nums))",
+                    "repo_path": str(repo),
+                },
+            )
+            assert resp["ok"] is True
+            data = resp["data"]
+            assert data["success"] is True
+            fpath = Path(data["file_path"])
+            assert fpath.exists()
+            assert fpath.name == "ContainsDuplicate.py"
+            content = fpath.read_text(encoding="utf-8")
+            assert '"""' in content
+
+    def test_add_problem_custom_platform(self, tmp_path):
+        """add_problem supports custom platform when Other is selected."""
+        repo = tmp_path / "RepoPlat"
+        repo.mkdir()
+
+        with BridgeProcess() as bridge:
+            resp = bridge.send(
+                "add_problem",
+                {
+                    "title": "Gym Task A",
+                    "platform": "Other",
+                    "custom_platform": "Codeforces Gym",
+                    "language": "C++",
+                    "category": "Sorting",
+                    "description": "Sort the gym entries.",
+                    "solution_code": "int main() {}",
+                    "repo_path": str(repo),
+                },
+            )
+            assert resp["ok"] is True
+            data = resp["data"]
+            assert data["success"] is True
+            content = Path(data["file_path"]).read_text(encoding="utf-8")
+            assert "Platform: Codeforces Gym" in content
+
+    def test_add_problem_collision_protection(self, tmp_path):
+        """add_problem refuses to overwrite an existing problem file."""
+        repo = tmp_path / "RepoDup"
+        repo.mkdir()
+        (repo / "Arrays").mkdir()
+        existing = repo / "Arrays" / "TwoSum.cpp"
+        existing.write_text("/* Existing solution */", encoding="utf-8")
+
+        with BridgeProcess() as bridge:
+            resp = bridge.send(
+                "add_problem",
+                {
+                    "title": "Two Sum",
+                    "platform": "LeetCode",
+                    "language": "C++",
+                    "category": "Arrays",
+                    "description": "Find indices summing to target.",
+                    "solution_code": "int main() {}",
+                    "repo_path": str(repo),
+                },
+            )
+            assert resp["ok"] is True
+            data = resp["data"]
+            assert data["success"] is False
+            assert "already exists" in data["message"]
+            # Ensure existing file content wasn't altered
+            assert existing.read_text(encoding="utf-8") == "/* Existing solution */"
+
+    def test_add_problem_path_traversal_protection(self, tmp_path):
+        """add_problem rejects path traversal in title or category."""
+        repo = tmp_path / "RepoTrav"
+        repo.mkdir()
+
+        with BridgeProcess() as bridge:
+            resp = bridge.send(
+                "add_problem",
+                {
+                    "title": "../../DangerousTitle",
+                    "platform": "LeetCode",
+                    "language": "C++",
+                    "category": "Arrays",
+                    "description": "Traversal test",
+                    "solution_code": "int main() {}",
+                    "repo_path": str(repo),
+                },
+            )
+            assert resp["ok"] is True
+            assert resp["data"]["success"] is False
+            assert "path traversal" in resp["data"]["message"].lower()
+
+    def test_add_problem_missing_required_fields(self, tmp_path):
+        """add_problem returns a clear error when required fields are missing."""
+        repo = tmp_path / "RepoReq"
+        repo.mkdir()
+
+        with BridgeProcess() as bridge:
+            resp = bridge.send(
+                "add_problem",
+                {
+                    "title": "",
+                    "platform": "LeetCode",
+                    "language": "C++",
+                    "category": "Arrays",
+                    "description": "Test",
+                    "solution_code": "int main() {}",
+                    "repo_path": str(repo),
+                },
+            )
+            assert resp["ok"] is True
+            assert resp["data"]["success"] is False
+            assert "title is required" in resp["data"]["message"].lower()
+
 
 class TestBridgeResponseFormat:
     """Verify the response envelope is always correct."""

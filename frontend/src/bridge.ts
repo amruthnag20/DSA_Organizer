@@ -104,6 +104,46 @@ export interface DashboardStats {
   error?: string;
 }
 
+/** Payload for creating a new problem file. */
+export interface AddProblemPayload {
+  title: string;
+  platform: string;
+  language: string;
+  category: string;
+  description: string;
+  solution_code: string;
+  custom_platform?: string;
+  repo_path?: string;
+  concepts?: string;
+  data_structures?: string;
+  tags?: string;
+  importance?: number | string;
+}
+
+/** Result from add_problem bridge command. */
+export interface AddProblemResult {
+  success: boolean;
+  message: string;
+  file_path: string | null;
+  error?: string | null;
+}
+
+/** Result from analyze_complexity bridge command. */
+export interface ComplexityResult {
+  time_complexity: string;
+  space_complexity: string;
+}
+
+/** Pre-populated options for Add Problem form. */
+export interface MetadataOptions {
+  languages: string[];
+  platforms: string[];
+  categories: string[];
+  tags: string[];
+  concepts: string[];
+  data_structures: string[];
+}
+
 // ---------------------------------------------------------------------------
 // Request ID generation
 // ---------------------------------------------------------------------------
@@ -206,4 +246,45 @@ export async function verifyGit(
   repoPath?: string
 ): Promise<BridgeResponse<Record<string, unknown>>> {
   return callBridge("verify_git", repoPath ? { repo_path: repoPath } : {});
+}
+
+/** Add/create a new problem file with metadata and physical verification. */
+export async function addProblem(
+  payload: AddProblemPayload
+): Promise<BridgeResponse<AddProblemResult>> {
+  return callBridge("add_problem", payload as unknown as Record<string, unknown>);
+}
+
+/** Analyze code complexity via backend engine. */
+export async function analyzeComplexity(
+  language: string,
+  solutionCode: string
+): Promise<BridgeResponse<ComplexityResult>> {
+  return callBridge("analyze_complexity", { language, solution_code: solutionCode });
+}
+
+/** Get form metadata options (platforms, categories, tags, concepts, data structures). */
+export async function getMetadataOptions(): Promise<BridgeResponse<MetadataOptions>> {
+  return callBridge("get_metadata_options");
+}
+
+/** Save a new custom platform into project.json. */
+export async function saveCustomPlatform(
+  name: string
+): Promise<BridgeResponse<{ success: boolean; message: string }>> {
+  return callBridge("save_custom_platform", { name });
+}
+
+/** Save a new custom category into project.json. */
+export async function saveCustomCategory(
+  name: string
+): Promise<BridgeResponse<{ success: boolean; message: string }>> {
+  return callBridge("save_custom_category", { name });
+}
+
+/** Save a new custom tag into project.json. */
+export async function saveCustomTag(
+  name: string
+): Promise<BridgeResponse<{ success: boolean; message: string }>> {
+  return callBridge("save_custom_tag", { name });
 }

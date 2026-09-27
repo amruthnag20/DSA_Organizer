@@ -141,21 +141,104 @@ def handle_verify_git(args: dict) -> dict:
     return result
 
 
+def handle_add_problem(args: dict) -> dict:
+    """Create a new problem file with standardized metadata and physical verification."""
+    repo_path = args.get("repo_path")
+    if not repo_path:
+        config, err = backend.load_config()
+        if err or not config:
+            return {"success": False, "error": err or "No configuration found", "message": err or "No configuration found"}
+        repo_path = config.get("repository_path") or config.get("repository")
+
+    success, message, target_file = backend.create_problem_file(
+        title=args.get("title", ""),
+        platform=args.get("platform", ""),
+        language=args.get("language", ""),
+        category=args.get("category", ""),
+        description=args.get("description", ""),
+        solution_code=args.get("solution_code", ""),
+        custom_platform=args.get("custom_platform"),
+        repo_path=repo_path,
+        concepts=args.get("concepts"),
+        data_structures=args.get("data_structures"),
+        tags=args.get("tags"),
+        importance=args.get("importance", 3),
+    )
+    return {
+        "success": success,
+        "message": message,
+        "file_path": str(target_file) if target_file else None,
+        "error": None if success else message,
+    }
+
+
+def handle_analyze_complexity(args: dict) -> dict:
+    """Analyze solution code complexity using backend complexity engine."""
+    language = args.get("language", "")
+    solution_code = args.get("solution_code", "")
+    if not solution_code.strip():
+        return {"time_complexity": "Unable to determine", "space_complexity": "Unable to determine"}
+    analysis = backend.analyze_complexity(language, solution_code)
+    return {
+        "time_complexity": analysis.get("time_complexity", "Unable to determine"),
+        "space_complexity": analysis.get("space_complexity", "Unable to determine"),
+    }
+
+
+def handle_get_metadata_options(args: dict) -> dict:
+    """Return available options for Add Problem form."""
+    return {
+        "languages": list(backend.SUPPORTED_LANGUAGES.keys()),
+        "platforms": backend.get_all_platforms(),
+        "categories": backend.get_categories(),
+        "tags": backend.get_all_tags(),
+        "concepts": backend.BUILTIN_CONCEPTS,
+        "data_structures": backend.BUILTIN_DATA_STRUCTURES,
+    }
+
+
+def handle_save_custom_platform(args: dict) -> dict:
+    """Save a new custom platform."""
+    name = args.get("name", "")
+    ok, msg = backend.save_custom_platform(name)
+    return {"success": ok, "message": msg}
+
+
+def handle_save_custom_category(args: dict) -> dict:
+    """Save a new custom category."""
+    name = args.get("name", "")
+    ok, msg = backend.save_custom_category(name)
+    return {"success": ok, "message": msg}
+
+
+def handle_save_custom_tag(args: dict) -> dict:
+    """Save a new custom tag."""
+    name = args.get("name", "")
+    ok, msg = backend.save_custom_tag(name)
+    return {"success": ok, "message": msg}
+
+
 # ---------------------------------------------------------------------------
 # Command dispatch table
 # ---------------------------------------------------------------------------
 
 COMMANDS = {
-    "ping":                 handle_ping,
-    "load_config":          handle_load_config,
-    "validate_repository":  handle_validate_repository,
-    "scan_repository":      handle_scan_repository,
-    "get_dashboard_stats":  handle_get_dashboard_stats,
-    "get_categories":       handle_get_categories,
-    "get_all_platforms":    handle_get_all_platforms,
-    "get_all_tags":         handle_get_all_tags,
-    "ensure_directories":   handle_ensure_directories,
-    "verify_git":           handle_verify_git,
+    "ping":                   handle_ping,
+    "load_config":            handle_load_config,
+    "validate_repository":    handle_validate_repository,
+    "scan_repository":        handle_scan_repository,
+    "get_dashboard_stats":    handle_get_dashboard_stats,
+    "get_categories":         handle_get_categories,
+    "get_all_platforms":      handle_get_all_platforms,
+    "get_all_tags":           handle_get_all_tags,
+    "ensure_directories":     handle_ensure_directories,
+    "verify_git":             handle_verify_git,
+    "add_problem":            handle_add_problem,
+    "analyze_complexity":     handle_analyze_complexity,
+    "get_metadata_options":   handle_get_metadata_options,
+    "save_custom_platform":   handle_save_custom_platform,
+    "save_custom_category":   handle_save_custom_category,
+    "save_custom_tag":        handle_save_custom_tag,
 }
 
 

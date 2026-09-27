@@ -8,6 +8,7 @@ import { StatCard } from "../components/dashboard/StatCard";
 import { CategoryBreakdown } from "../components/dashboard/CategoryBreakdown";
 import { RecentProblems } from "../components/dashboard/RecentProblems";
 import { ActivityHeatmap } from "../components/dashboard/ActivityHeatmap";
+import { AddProblemModal } from "../components/dashboard/AddProblemModal";
 
 interface HomeProps {
   repoPath?: string;
@@ -18,6 +19,7 @@ export const Home: React.FC<HomeProps> = ({ repoPath }) => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [rescanLoading, setRescanLoading] = useState<boolean>(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [actionNotice, setActionNotice] = useState<{
     type: "info" | "success" | "error";
@@ -65,22 +67,28 @@ export const Home: React.FC<HomeProps> = ({ repoPath }) => {
       } else {
         setActionNotice({
           type: "error",
-          message: scanResp.error || scanResp.data?.error || "Rescan failed.",
+          message: `Rescan failed: ${scanResp.error || scanResp.data?.error || "Unknown error"}`,
         });
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      setActionNotice({ type: "error", message: `Rescan error: ${msg}` });
+      setActionNotice({ type: "error", message: `Rescan failed: ${msg}` });
     } finally {
       setRescanLoading(false);
     }
   };
 
   const handleAddProblem = () => {
+    setIsAddModalOpen(true);
+  };
+
+  const handleAddProblemSuccess = async (_filePath: string, title: string, category: string) => {
     setActionNotice({
-      type: "info",
-      message: "Add Problem is temporarily unavailable in this build.",
+      type: "success",
+      message: `Problem '${title}' created successfully in '${category}'. Refreshing dashboard...`,
     });
+    // Refresh authoritative backend statistics
+    await fetchStats();
   };
 
   if (loading && !stats) {
@@ -221,6 +229,14 @@ export const Home: React.FC<HomeProps> = ({ repoPath }) => {
 
       {/* Bottom Panel: Activity Heatmap */}
       <ActivityHeatmap heatmapWeeks={stats?.heatmap_weeks || []} />
+
+      {/* Add Problem Desktop Modal */}
+      <AddProblemModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onSuccess={handleAddProblemSuccess}
+        repoPath={repoPath}
+      />
     </div>
   );
 };
