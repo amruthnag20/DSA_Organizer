@@ -1,0 +1,10 @@
+{
+  "name": "dsa-organizer",
+  "private": true,
+  "description": "DSA Organizer desktop application",
+  "scripts": {
+    "tauri": "npm --prefix frontend run tauri",
+    "dev": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend run build"
+  }
+}

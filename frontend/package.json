@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "node run-tauri.js"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.12.0",
