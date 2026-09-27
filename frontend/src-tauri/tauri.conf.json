@@ -13,8 +13,8 @@
     "windows": [
       {
         "title": "DSA Organizer",
-        "width": 800,
-        "height": 600,
+        "width": 1100,
+        "height": 750,
         "resizable": true,
         "fullscreen": false
       }
