@@ -214,12 +214,51 @@ class TestBridgeDomainCommands:
             assert isinstance(data["problems"], list)
 
     def test_get_dashboard_stats(self):
-        """get_dashboard_stats returns dashboard statistics."""
+        """get_dashboard_stats returns dashboard statistics with complete schema."""
         with BridgeProcess() as bridge:
             resp = bridge.send("get_dashboard_stats")
             assert resp["ok"] is True
             data = resp["data"]
+            assert data["success"] is True
             assert "total_problems" in data
+            assert "this_week" in data
+            assert "this_month" in data
+            assert "current_streak" in data
+            assert "longest_streak" in data
+            assert "category_counts" in data
+            assert "most_practiced_categories" in data
+            assert "least_practiced_categories" in data
+            assert "recent_problems" in data
+            assert "heatmap_weeks" in data
+            assert len(data["heatmap_weeks"]) == 12
+            for week in data["heatmap_weeks"]:
+                assert len(week) == 7
+                for day in week:
+                    assert "date" in day
+                    assert "count" in day
+                    assert "level" in day
+
+    def test_get_dashboard_stats_with_explicit_repo(self, tmp_path):
+        """get_dashboard_stats calculates correct stats for an explicit repository path."""
+        repo_dir = tmp_path / "TestDSA"
+        repo_dir.mkdir()
+        (repo_dir / "Arrays").mkdir()
+        prob_file = repo_dir / "Arrays" / "TwoSum.cpp"
+        prob_file.write_text(
+            "/*\nProblem: Two Sum\nPrimary Category: Arrays\nAdded: 2026-09-26\n*/\nint main(){}",
+            encoding="utf-8",
+        )
+
+        with BridgeProcess() as bridge:
+            resp = bridge.send("get_dashboard_stats", {"repo_path": str(repo_dir)})
+            assert resp["ok"] is True
+            data = resp["data"]
+            assert data["success"] is True
+            assert data["total_problems"] == 1
+            assert data["category_counts"].get("Arrays") == 1
+            assert len(data["recent_problems"]) == 1
+            assert data["recent_problems"][0]["title"] == "Two Sum"
+            assert data["recent_problems"][0]["category"] == "Arrays"
 
     def test_get_categories(self):
         """get_categories returns list of available categories."""

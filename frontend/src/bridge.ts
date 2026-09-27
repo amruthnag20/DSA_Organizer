@@ -52,21 +52,56 @@ export interface ScanResult {
   error?: string;
 }
 
-/** Individual problem record from a scan. */
+/** Individual problem record from a scan or recent problems. */
 export interface ProblemRecord {
   file_path: string;
   rel_path: string;
-  filename: string;
+  filename?: string;
   title: string;
   language: string;
   platform: string;
   category: string;
-  folder_category: string;
+  folder_category?: string;
   status: "complete" | "incomplete" | "unreadable";
-  is_complete: boolean;
-  missing_fields: string[];
-  category_mismatch: boolean;
-  metadata: Record<string, unknown>;
+  is_complete?: boolean;
+  missing_fields?: string[];
+  category_mismatch?: boolean;
+  metadata?: Record<string, unknown>;
+  added_date?: string;
+  parsed_date?: string | null;
+  formatted_date?: string;
+}
+
+/** Single day data point inside a 12-week activity heatmap. */
+export interface HeatmapDay {
+  date: string;
+  formatted_date: string;
+  day_name: string;
+  day_number: number;
+  month_name: string;
+  count: number;
+  level: number; // 0 (empty) to 4 (high activity)
+  is_today: boolean;
+  is_future: boolean;
+}
+
+/** Comprehensive dashboard statistics returned by get_dashboard_stats. */
+export interface DashboardStats {
+  success: boolean;
+  repo_path?: string;
+  total_problems: number;
+  this_week: number;
+  this_month: number;
+  current_streak: number;
+  longest_streak: number;
+  category_counts: Record<string, number>;
+  most_practiced_categories: [string, number][];
+  least_practiced_categories: [string, number][];
+  recent_problems: ProblemRecord[];
+  activity_by_date: Record<string, number>;
+  heatmap_weeks: HeatmapDay[][];
+  problems?: ProblemRecord[];
+  error?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -134,7 +169,7 @@ export async function scanRepository(repoPath?: string): Promise<BridgeResponse<
 /** Get dashboard statistics. */
 export async function getDashboardStats(
   repoPath?: string
-): Promise<BridgeResponse<Record<string, unknown>>> {
+): Promise<BridgeResponse<DashboardStats>> {
   return callBridge("get_dashboard_stats", repoPath ? { repo_path: repoPath } : {});
 }
 
