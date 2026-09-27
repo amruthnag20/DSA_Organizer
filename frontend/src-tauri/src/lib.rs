@@ -27,7 +27,7 @@ fn spawn_bridge() -> Result<Child, String> {
     cmd.arg(&bridge_script)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
+        .stderr(Stdio::inherit())
         .current_dir(bridge_script.parent().unwrap().parent().unwrap()); // project root
 
     // Hide console window on Windows
@@ -115,6 +115,8 @@ fn bridge_command(
     args: Value,
     id: String,
 ) -> Result<Value, String> {
+    eprintln!("[tauri] bridge_command called: cmd={} id={}", cmd, id);
+
     let mut guard = state
         .process
         .lock()
@@ -162,6 +164,8 @@ fn bridge_command(
 
     let response: Value = serde_json::from_str(&response_line)
         .map_err(|e| format!("Invalid bridge response JSON: {} (got: {})", e, response_line))?;
+
+    eprintln!("[tauri] bridge_command response received: ok={}", response.get("ok").unwrap_or(&serde_json::Value::Null));
 
     Ok(response)
 }
